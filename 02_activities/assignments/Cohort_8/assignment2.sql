@@ -21,11 +21,6 @@ The `||` values concatenate the columns into strings.
 Edit the appropriate columns -- you're making two edits -- and the NULL rows will be fixed. 
 All the other rows will remain the same. */
 
-SELECT 
-    COALESCE(product_name, '') || ', ' || 
-    product_size || ' (' || 
-    COALESCE(product_qty_type, 'unit') || ')'
-FROM product;
 
 
 
@@ -39,61 +34,18 @@ each new market date for each customer, or select only the unique market dates p
 (without purchase details) and number those visits. 
 HINT: One of these approaches uses ROW_NUMBER() and one uses DENSE_RANK(). */
 
-SELECT 
-    customer_id,
-    market_date,
-    ROW_NUMBER() OVER (
-        PARTITION BY customer_id 
-        ORDER BY market_date
-    ) AS visit_number,
-    product_id,
-    quantity
-FROM customer_purchases;
+
 
 /* 2. Reverse the numbering of the query from a part so each customer’s most recent visit is labeled 1, 
 then write another query that uses this one as a subquery (or temp table) and filters the results to 
 only the customer’s most recent visit. */
 
-SELECT 
-    customer_id,
-    market_date,
-    ROW_NUMBER() OVER (
-        PARTITION BY customer_id 
-        ORDER BY market_date DESC
-    ) AS visit_number,
-    product_id,
-    quantity
-FROM customer_purchases;
-
-
-SELECT *
-FROM (
-    SELECT 
-        customer_id,
-        market_date,
-        ROW_NUMBER() OVER (
-            PARTITION BY customer_id 
-            ORDER BY market_date DESC
-        ) AS visit_number,
-        product_id,
-        quantity
-    FROM customer_purchases
-) AS ranked_visits
-WHERE visit_number = 1;
 
 
 /* 3. Using a COUNT() window function, include a value along with each row of the 
 customer_purchases table that indicates how many different times that customer has purchased that product_id. */
 
-SELECT 
-    customer_id,
-    product_id,
-    market_date,
-    quantity,
-    COUNT(*) OVER (
-        PARTITION BY customer_id, product_id
-    ) AS total_purchases_for_product
-FROM customer_purchases;
+
 
 -- String manipulations
 /* 1. Some product names in the product table have descriptions like "Jar" or "Organic". 
@@ -107,28 +59,10 @@ Remove any trailing or leading whitespaces. Don't just use a case statement for 
 
 Hint: you might need to use INSTR(product_name,'-') to find the hyphens. INSTR will help split the column. */
 
-SELECT 
-    product_name,
-    TRIM(
-        SUBSTR(
-            product_name,
-            NULLIF(INSTR(product_name, '-') , 0) + 1
-        )
-    ) AS description
-FROM product;
+
 
 /* 2. Filter the query to show any product_size value that contain a number with REGEXP. */
-SELECT 
-    product_name,
-    TRIM(
-        SUBSTR(
-            product_name,
-            NULLIF(INSTR(product_name, '-') , 0) + 1
-        )
-    ) AS description,
-    product_size
-FROM product
-WHERE product_size REGEXP '[0-9]';
+
 
 
 -- UNION
@@ -141,31 +75,7 @@ HINT: There are a possibly a few ways to do this query, but if you're struggling
 3) Query the second temp table twice, once for the best day, once for the worst day, 
 with a UNION binding them. */
 
--- Aggregate total quantity per market_date
-WITH sales_by_date AS (
-    SELECT 
-        cp.market_date,
-        SUM(cp.quantity*cost_to_customer_per_qty) AS total_sales
-    FROM customer_purchases cp
-    GROUP BY cp.market_date
-),
--- Rank dates by total_sales using DENSE_RANK
-ranked_sales AS (    
-    SELECT 
-        s.market_date,
-        s.total_sales,
-        DENSE_RANK() OVER (ORDER BY s.total_sales DESC) AS best_rank,
-        DENSE_RANK() OVER (ORDER BY s.total_sales ASC)  AS worst_rank
-    FROM sales_by_date s
-)
--- UNION best and worst days
-SELECT r.market_date, r.total_sales, 'Best Day' AS label
-FROM ranked_sales r
-WHERE r.best_rank = 1
-UNION
-SELECT r.market_date, r.total_sales, 'Worst Day' AS label
-FROM ranked_sales r
-WHERE r.worst_rank = 1;
+
 
 
 /* SECTION 3 */
@@ -181,19 +91,6 @@ Think a bit about the row counts: how many distinct vendors, product names are t
 How many customers are there (y). 
 Before your final group by you should have the product of those two queries (x*y).  */
 
-WITH customer_count AS (
-    SELECT COUNT(*) AS num_customers
-    FROM customer
-)
-SELECT 
-    v.vendor_name,
-    p.product_name,
-    SUM(vi.original_price * 5 * cc.num_customers) AS total_revenue
-FROM vendor_inventory vi
-JOIN vendor  v ON v.vendor_id   = vi.vendor_id
-JOIN product p ON p.product_id  = vi.product_id
-CROSS JOIN customer_count cc
-GROUP BY v.vendor_name, p.product_name;
 
 
 -- INSERT
@@ -201,43 +98,19 @@ GROUP BY v.vendor_name, p.product_name;
 This table will contain only products where the `product_qty_type = 'unit'`. 
 It should use all of the columns from the product table, as well as a new column for the `CURRENT_TIMESTAMP`.  
 Name the timestamp column `snapshot_timestamp`. */
-CREATE TABLE product_units AS
-SELECT 
-    p.*,
-    CURRENT_TIMESTAMP AS snapshot_timestamp
-FROM product p
-WHERE p.product_qty_type = 'unit';
 
-SELECT * FROM product_units;
 
 
 /*2. Using `INSERT`, add a new row to the product_units table (with an updated timestamp). 
 This can be any product you desire (e.g. add another record for Apple Pie). */
 
-INSERT INTO product_units (
-    product_id,
-    product_name,
-	product_size,
-    product_category_id,
-    product_qty_type,
-    snapshot_timestamp
-)
-VALUES (
-    999,
-    'Apple Pie',
-	'10"',
-	'10',
-    'unit',
-    CURRENT_TIMESTAMP
-);
+
 
 -- DELETE
 /* 1. Delete the older record for the whatever product you added. 
 
 HINT: If you don't specify a WHERE clause, you are going to have a bad time.*/
 
-DELETE FROM product_units
-WHERE product_id = 999;
 
 
 -- UPDATE
@@ -245,12 +118,10 @@ WHERE product_id = 999;
 First, add a new column, current_quantity to the table using the following syntax.
 
 ALTER TABLE product_units
-ADD current_quantity INT; */
+ADD current_quantity INT;
 
-ALTER TABLE product_units
-ADD COLUMN current_quantity INT;
+Then, using UPDATE, change the current_quantity equal to the last quantity value from the vendor_inventory details.
 
-/* Then, using UPDATE, change the current_quantity equal to the last quantity value from the vendor_inventory details.
 HINT: This one is pretty hard. 
 First, determine how to get the "last" quantity per product. 
 Second, coalesce null values to 0 (if you don't have null values, figure out how to rearrange your query so you do.) 
@@ -259,13 +130,6 @@ Finally, make sure you have a WHERE statement to update the right row,
 	you'll need to use product_units.product_id to refer to the correct row within the product_units table. 
 When you have all of these components, you can run the update statement. */
 
-UPDATE product_units
-SET current_quantity = COALESCE((
-    SELECT vi.quantity
-    FROM vendor_inventory vi
-    WHERE vi.product_id = product_units.product_id
-    ORDER BY vi.market_date DESC 
-    LIMIT 1
-), 0);
+
 
 
