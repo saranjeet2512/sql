@@ -14,9 +14,9 @@
     * Open a private window in your browser. Copy and paste the link to your pull request into the address bar. Make sure you can see your pull request properly. This helps the technical facilitator and learning support staff review your submission easily.
 
 Checklist:
-- [ ] Create a branch called `assignment-two`.
-- [ ] Ensure that the repository is public.
-- [ ] Review [the PR description guidelines](https://github.com/UofT-DSI/onboarding/blob/main/onboarding_documents/submissions.md#guidelines-for-pull-request-descriptions) and adhere to them.
+- [x] Create a branch called `assignment-two`.
+- [x] Ensure that the repository is public.
+- [x] Review [the PR description guidelines](https://github.com/UofT-DSI/onboarding/blob/main/onboarding_documents/submissions.md#guidelines-for-pull-request-descriptions) and adhere to them.
 - [ ] Verify that the link is accessible in a private browser window.
 
 If you encounter any difficulties or have questions, please don't hesitate to reach out to our team via our Slack. Our Technical Facilitators and Learning Support staff are here to help you navigate any challenges.
@@ -55,6 +55,11 @@ The store wants to keep customer addresses. Propose two architectures for the CU
 
 ```
 Your answer...
+Type 1 (Overwrite architecture): The CUSTOMER_ADDRESS table simply updates the existing record when a customer’s address changes. No history is kept.
+
+Type 2 (Retain architecture): The CUSTOMER_ADDRESS table creates a new row for each address change, preserving historical records with start/end dates or active flags
+
+
 ```
 
 ***
@@ -64,8 +69,8 @@ You can start this section following *session 4*.
 
 Steps to complete this part of the assignment:
 - Open the assignment2.sql file in DB Browser for SQLite:
-	- from [Github](./02_activities/assignments/assignment2.sql)
-	- or, from your local forked repository  
+    - from [Github](./02_activities/assignments/assignment2.sql)
+    - or, from your local forked repository  
 - Complete each question
 
 
@@ -126,8 +131,8 @@ You can start this section following *session 5*.
 
 Steps to complete this part of the assignment:
 - Open the assignment2.sql file in DB Browser for SQLite:
-	- from [Github](./02_activities/assignments/assignment2.sql)
-	- or, from your local forked repository  
+    - from [Github](./02_activities/assignments/assignment2.sql)
+    - or, from your local forked repository  
 - Complete each question
 
 ### Write SQL
